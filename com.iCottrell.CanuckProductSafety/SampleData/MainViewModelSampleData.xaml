@@ -1,0 +1,14 @@
+﻿<local:MainViewModel 
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"       
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:com.iCottrell.CanuckProductSafety" 
+    SampleProperty="Sample Text Property Value">
+    
+    <local:MainViewModel.Items>
+        <local:ProductViewModel Category="design one" ShortDescription="short des 1" RecallDateString="Jan 4 2008"/>
+        <local:ProductViewModel Category="design four" ShortDescription="short des 2" RecallDateString="Jan 4 2008"/>
+        <local:ProductViewModel Category="design five" ShortDescription="short des 3" RecallDateString="Jan 4 2008"/>
+        <local:ProductViewModel Category="design six" ShortDescription="short des 4" RecallDateString="Jan 4 2008"/>
+    </local:MainViewModel.Items>
+    
+</local:MainViewModel>
