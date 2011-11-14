@@ -26,6 +26,7 @@ namespace com.iCottrell.CanuckProductSafety
         public ProductReportPage()
         {
             InitializeComponent();
+            LoadingProductScreen.Child = new PopupSplash();
         }
 
         protected override void OnNavigatedTo(System.Windows.Navigation.NavigationEventArgs e)
@@ -69,6 +70,7 @@ namespace com.iCottrell.CanuckProductSafety
 
             if (CurrentPage != "")
             {
+                LoadingProductScreen.IsOpen = true;
                 HtmlWeb webGet = new HtmlWeb();
                 webGet.LoadCompleted += parse_DownloadProductReportPageCompleted;
                 webGet.LoadAsync(CurrentPage, Encoding.UTF8);
@@ -515,6 +517,7 @@ namespace com.iCottrell.CanuckProductSafety
                     PageBody.Children.Add(rtb);
 
                 }
+                LoadingProductScreen.IsOpen = false;
                 PageBody.InvalidateArrange();
                 PageBody.InvalidateMeasure();
                 scrollerViewer.InvalidateArrange();

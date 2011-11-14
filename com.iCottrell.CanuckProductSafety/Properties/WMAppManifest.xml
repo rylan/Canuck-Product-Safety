@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Deployment xmlns="http://schemas.microsoft.com/windowsphone/2009/deployment" AppPlatformVersion="7.1">
-  <App xmlns="" ProductID="{d8c1d941-d328-4659-b215-36adb54a62b7}" Title="Canuck Product Safety" RuntimeType="Silverlight" Version="1.0.0.0" Genre="apps.normal" Author="com.iCottrell.CanuckProductSafety author" Description="Canadian Product Safety Information" Publisher="com.iCottrell.CanuckProductSafety">
+  <App xmlns="" ProductID="{d8c1d941-d328-4659-b215-36adb54a62b7}" Title="Canuck Product Safety" RuntimeType="Silverlight" Version="1.1.0.0" Genre="apps.normal" Author="com.iCottrell.CanuckProductSafety author" Description="Canadian Product Safety Information" Publisher="com.iCottrell.CanuckProductSafety">
     <IconPath IsRelative="true" IsResource="false">ApplicationIcon.png</IconPath>
     <Capabilities>
       <Capability Name="ID_CAP_GAMERSERVICES" />
