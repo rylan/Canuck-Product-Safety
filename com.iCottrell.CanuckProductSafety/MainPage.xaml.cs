@@ -15,22 +15,18 @@ using HtmlAgilityPack;
 using System.Collections.ObjectModel;
 using Microsoft.Phone.Net.NetworkInformation;
 using System.ComponentModel;
+using Microsoft.Phone.Tasks;
 
 namespace com.iCottrell.CanuckProductSafety
 {
     public partial class MainPage : PhoneApplicationPage
     {
-        
+        MarketplaceDetailTask _marketPlaceDetailTask = new MarketplaceDetailTask();
         // Constructor
         public MainPage()
         {
             InitializeComponent();
-            LoadingScreen.Child = new PopupSplash();  
-            // Pull down data
-            // Set the data context of the listbox control to the sample data
-            DataContext = App.ViewModel;
-            App.ViewModel.PropertyChanged += new PropertyChangedEventHandler(NotifyPropertyChanged);
-            this.Loaded += new RoutedEventHandler(MainPage_Loaded);
+            LoadingScreen.Child = new PopupSplash();
         }
 
 
@@ -58,7 +54,7 @@ namespace com.iCottrell.CanuckProductSafety
         protected override void OnNavigatedTo(System.Windows.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-
+            
             if (DeviceNetworkInformation.IsNetworkAvailable )
             {
                 // Set the data context of the listbox control to the sample data
@@ -68,13 +64,23 @@ namespace com.iCottrell.CanuckProductSafety
             }
             else
             {
-                this.NavigationService.Navigate(new Uri("/ErrorPageNoDataConn.xaml", UriKind.Relative));
+                if (e.NavigationMode == System.Windows.Navigation.NavigationMode.Back && !App.ViewModel.IsDataLoaded)
+                {
+                    this.NavigationService.GoBack();
+                }
+                else
+                {
+                    App.ViewModel.IsDataLoaded = false;
+                    this.NavigationService.Navigate(new Uri("/ErrorPageNoDataConn.xaml", UriKind.Relative));
+                }
             }
         }
         private void ProductTap(object sender, GestureEventArgs e)
         {
             StackPanel sp = (StackPanel)sender;
-            this.NavigationService.Navigate(new Uri("/ProductReportPage.xaml?href=" + sp.Tag, UriKind.Relative));
+            //will need to clean up consumer report 
+            String href = (String)sp.Tag;
+            this.NavigationService.Navigate(new Uri("/ProductReportPage.xaml?href=" + Uri.EscapeDataString(href), UriKind.Relative));
         }
 
         private void openPopup(object sender, ManipulationStartedEventArgs e)
@@ -87,6 +93,6 @@ namespace com.iCottrell.CanuckProductSafety
         {
             LoadingScreen.IsOpen = false;
             PivotControl.Visibility = Visibility.Visible;
-        }    
+        }
     }
 }

@@ -17,9 +17,12 @@
 
     <!--LayoutRoot is the root grid where all page content is placed-->
     <Grid x:Name="LayoutRoot" Background="Transparent">
+        
+
         <!--Pivot Control-->
         <Popup Name="LoadingScreen" />
-        <controls:Pivot Title="Canuck Product Safety" Name="PivotControl" Visibility="Collapsed">
+        
+            <controls:Pivot Grid.Row="0" Title="Canuck Product Safety"  Name="PivotControl" Visibility="Collapsed">
             <!--Pivot item one-->
             <controls:PivotItem Header="All by date" Name="AllByDate" >
                 <ListBox x:Name="AllListBox" Margin="0,0,-12,0" ItemsSource="{Binding Items}">
@@ -38,9 +41,9 @@
             </controls:PivotItem>
  
             <!--Pivot item two-->
-            <controls:PivotItem Header="Bacteria (including E. coli and Salmonella)"> 
+            <controls:PivotItem Header="Advisories, Warnings and Recalls"> 
                 <!--Triple line list no text wrapping-->
-                <ListBox x:Name="BacteriaListBox" Margin="0,0,-12,0" ItemsSource="{Binding BacteriaItems.View}">
+                <ListBox x:Name="AWRListBox" Margin="0,0,-12,0" ItemsSource="{Binding AdvisoriesWarningsRecalls.View}">
                         <ListBox.ItemTemplate>
                         <DataTemplate >
                             <StackPanel  Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
@@ -51,9 +54,9 @@
                     </ListBox.ItemTemplate>
                     </ListBox>
             </controls:PivotItem>
-            <controls:PivotItem Header="Child Safety">
+            <controls:PivotItem Header="Foreign Product Alerts">
                 <!--Triple line list no text wrapping-->
-                <ListBox x:Name="ChildListBox" Margin="0,0,-12,0" ItemsSource="{Binding ChildSafetyItems.View}">
+                <ListBox x:Name="FRAListBox" Margin="0,0,-12,0" ItemsSource="{Binding ForeignProductAlerts.View}">
                     <ListBox.ItemTemplate>
                         <DataTemplate >
                             <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
@@ -64,10 +67,10 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
             </controls:PivotItem>
-            <controls:PivotItem Header="Consumer product safety">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="ConsumerListBox" Margin="0,0,-12,0" ItemsSource="{Binding ConsumerItems.View}">
-                        <ListBox.ItemTemplate>
+            <controls:PivotItem Header="Consumer Product Recalls">
+                <!--Triple line list no text wrapping-->
+                <ListBox x:Name="CPRListBox" Margin="0,0,-12,0" ItemsSource="{Binding ConsumerProductRecalls.View}">
+                    <ListBox.ItemTemplate>
                         <DataTemplate >
                             <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
                                 <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
@@ -75,307 +78,8 @@
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
-                    </ListBox>
-              </controls:PivotItem>
-            <controls:PivotItem Header="Dietary Supplements">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="DietaryListBox" Margin="0,0,-12,0" ItemsSource="{Binding DietarySupplementsItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Diseases and Conditions">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="DiseasesListBox" Margin="0,0,-12,0" ItemsSource="{Binding DiseasesItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Drugs and Health Products">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="DrugsListBox" Margin="0,0,-12,0" ItemsSource="{Binding DrugsItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Eye Care">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="EyeListBox" Margin="0,0,-12,0" ItemsSource="{Binding EyeItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Food Allergies">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="FoodAllergiesListBox" Margin="0,0,-12,0" ItemsSource="{Binding FoodAllergiesItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Food Safety">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="FoodSafetyListBox" Margin="0,0,-12,0" ItemsSource="{Binding FoodSafetyItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Fraud">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="FraudListBox" Margin="0,0,-12,0" ItemsSource="{Binding FraudItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Impotence">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="ImpotenceListBox" Margin="0,0,-12,0" ItemsSource="{Binding ImpotenceItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Infant Care">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="InfantListBox" Margin="0,0,-12,0" ItemsSource="{Binding InfantCareItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Influenza and Avian Flu">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="InfluenzaListBox" Margin="0,0,-12,0" ItemsSource="{Binding InfluenzaItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Jewellery">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="JewelleryListBox" Margin="0,0,-12,0" ItemsSource="{Binding JewelleryItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Labelling">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="LabellingListBox" Margin="0,0,-12,0" ItemsSource="{Binding LabellingItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Lead">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="LeadListBox" Margin="0,0,-12,0" ItemsSource="{Binding LeadItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Medical Devices and Equipment">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="MedicalListBox" Margin="0,0,-12,0" ItemsSource="{Binding MedicalItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Mercury">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="MercuryListBox" Margin="0,0,-12,0" ItemsSource="{Binding MercuryItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Mould">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="MouldListBox" Margin="0,0,-12,0" ItemsSource="{Binding MouldItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Natural Health Products">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="NaturalListBox" Margin="0,0,-12,0" ItemsSource="{Binding NaturalItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Oral Hygiene Products">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="OralListBox" Margin="0,0,-12,0" ItemsSource="{Binding OralItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Packaging">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="PackagingListBox" Margin="0,0,-12,0" ItemsSource="{Binding PackagingItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Sexual Enhancement Products">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="SexualListBox" Margin="0,0,-12,0" ItemsSource="{Binding SexualItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Travel Health">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="TravelListBox" Margin="0,0,-12,0" ItemsSource="{Binding TravelItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Veterinary Drugs">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="VeterinaryListBox" Margin="0,0,-12,0" ItemsSource="{Binding VeterinaryItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
-            <controls:PivotItem Header="Weight Loss">
-                    <!--Triple line list no text wrapping-->
-                <ListBox x:Name="WeightListBox" Margin="0,0,-12,0" ItemsSource="{Binding WeightItems.View}">
-                        <ListBox.ItemTemplate>
-                        <DataTemplate >
-                            <StackPanel Tap="ProductTap" Tag="{Binding Href}" Margin="0,15,0,0">
-                                <TextBlock Text="{Binding ShortDescription}" TextWrapping="Wrap" Style="{StaticResource PhoneTextNormalStyle}" TextAlignment="Left" />
-                                <TextBlock Text="{Binding RecallDateString}" Style="{StaticResource PhoneTextSmallStyle}"  TextAlignment="Left"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    </ListBox>
-                </controls:PivotItem>
+                </ListBox>
+            </controls:PivotItem>
         </controls:Pivot>
     </Grid>
 </phone:PhoneApplicationPage>

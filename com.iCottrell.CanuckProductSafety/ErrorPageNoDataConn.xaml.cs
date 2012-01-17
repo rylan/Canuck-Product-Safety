@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using Microsoft.Phone.Controls;
+using Microsoft.Phone.Net.NetworkInformation;
 
 namespace com.iCottrell.CanuckProductSafety
 {
@@ -31,9 +32,6 @@ namespace com.iCottrell.CanuckProductSafety
                 this.NavigationService.Navigate(new Uri("/MainPage.xaml?reload=true", UriKind.Relative));
             }
         }
-
-        
-
     }
 
 }

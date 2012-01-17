@@ -15,14 +15,19 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Collections.ObjectModel;
 using HtmlAgilityPack;
-
+using System.Text.RegularExpressions;
 
 namespace com.iCottrell.CanuckProductSafety
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private String Url_HealthCanadaProductRecall = "http://www.hc-sc.gc.ca/ahc-asc/media/advisories-avis/alpha-eng.php";
-        private String Url_Prefix = "http://www.hc-sc.gc.ca";
+        private String Url_HealthCanadaProductRecall_2012 = "http://www.hc-sc.gc.ca/ahc-asc/media/advisories-avis/_2012/index-eng.php";
+        private String Url_HealthCanadaProductRecall_2011 = "http://www.hc-sc.gc.ca/ahc-asc/media/advisories-avis/_2011/index-eng.php";
+        private String Url_HealthCanadaProductRecall_f2011 = "http://www.hc-sc.gc.ca/ahc-asc/media/advisories-avis/_fpa-ape_2011/index-eng.php";
+        private String Url_HealthCanadaConsumer = "http://cpsr-rspc.hc-sc.gc.ca/PR-RP/results-resultats-eng.jsp?searchstring=&searchyear=2012&searchyear=2011&searchcategory=";
+        private String Url_HealthCanadaConsumerPrefix = "http://cpsr-rspc.hc-sc.gc.ca";
+        //private String Url_HealthCanadaProductRecallCategory = "http://www.hc-sc.gc.ca/ahc-asc/media/advisories-avis/alpha-eng.php";
+        //private String Url_Prefix = "http://www.hc-sc.gc.ca";
 
         public MainViewModel()
         {
@@ -62,7 +67,7 @@ namespace com.iCottrell.CanuckProductSafety
         public bool IsDataLoaded
         {
             get;
-            private set;
+            set;
         }
 
         /// <summary>
@@ -71,8 +76,17 @@ namespace com.iCottrell.CanuckProductSafety
         public void LoadData()
         {
             HtmlWeb webGet = new HtmlWeb();
-            webGet.LoadCompleted += parse_RecallList;
-            webGet.LoadAsync(Url_HealthCanadaProductRecall);
+            webGet.LoadCompleted += parse_RecallListCurrent;
+            webGet.LoadAsync(Url_HealthCanadaProductRecall_2012);
+            webGet.LoadAsync(Url_HealthCanadaProductRecall_2011);
+
+            HtmlWeb fGet = new HtmlWeb();
+            fGet.LoadCompleted += parse_RecallListForegin;
+            fGet.LoadAsync(Url_HealthCanadaProductRecall_f2011);
+
+            HtmlWeb cGet = new HtmlWeb();
+            cGet.LoadCompleted += load_ConsumerProduct;
+            cGet.LoadAsync(Url_HealthCanadaConsumer);
             
         }
 
@@ -82,31 +96,16 @@ namespace com.iCottrell.CanuckProductSafety
         {
             if (propertyName == "WebDataRetrived")
             {
-                bacteriaItems = null;
-                weightItems = null;
-                childSafetyItems = null;
-                consumerItems = null;
-                dietarySupplementsItems = null;
-                drugsItems = null;
-                eyeItems = null;
-                foodAllergiesItems = null;
-                foodSafetyItems = null;
-                fraudItems = null;
-                impotenceItems = null;
-                infantCareItems = null;
-                influenzaItems = null;
-                jewelleryItems = null;
-                labellingItems = null;
-                leadItems = null;
-                medicalItems = null;
-                mercuryItems = null;
-                mouldItems = null; 
-                naturalItems = null; 
-                oralItems = null;
-                packagingItems = null;
-                sexualItems = null; 
-                travelItems = null; 
-                veterinaryItems = null;
+                IList<ProductViewModel> tmpItems = new List<ProductViewModel>(Items);
+                Items.Clear();
+                foreach (ProductViewModel p in tmpItems.OrderByDescending(x => x._dateRecall))
+                {
+                    this.Items.Add(p);
+
+                }
+                tmpItems.Clear();
+                foreignProductAlerts = null;
+                advisoriesWarningsRecalls = null;
                 Spinnner.ShowSpinner = false;
                 
             }
@@ -118,9 +117,316 @@ namespace com.iCottrell.CanuckProductSafety
             
         }
 
-        private void parse_RecallList(object sender, HtmlDocumentLoadCompleted e)
+        //Because current contains uncategorized items
+        private void parse_RecallListCurrent(object sender, HtmlDocumentLoadCompleted e)
         {
-           IList < ProductViewModel >  tmpItems = new List<ProductViewModel>();
+            IList<ProductViewModel> tmpItems = new List<ProductViewModel>();
+            IList<HtmlNode> hnc = e.Document.DocumentNode.DescendantNodes().ToList();
+            String currentCategory = "Advisories, Warnings and Recalls";
+  
+            foreach (HtmlNode node in hnc)
+            {
+                if (node.Name.ToLower() == "div")
+                {
+                    if (node.Attributes.Count == 1 && node.Attributes[0].Name.ToLower() == "class"
+                        && node.Attributes[0].Value.ToLower() == "date")
+                    {
+                        foreach (HtmlNode child in node.DescendantNodes().ToList())
+                        {
+                             if (child.Name.ToLower() == "li")
+                             {
+                                if (child.ParentNode.Name == "ul" && child.ParentNode.Attributes.Count == 0)
+                                {
+                                    ProductViewModel po = new ProductViewModel();
+                                    po.Category = currentCategory;
+                                    foreach (HtmlNode li in child.DescendantNodes().ToList())
+                                    {
+                                        if (li.Name.ToLower() == "a")
+                                        {
+                                            foreach (HtmlAttribute at in li.Attributes)
+                                            {
+                                                if (at.Name.ToLower() == "href")
+                                                {
+                                                    po.Href = at.Value;
+                                                }
+                                            }
+                                            po.ShortDescription = ConvertWhitespacesToSingleSpaces(li.InnerText.Replace("�", "'"));
+                                        }
+                                        else if (li.Name.ToLower() == "span")
+                                        {
+                                            po.RecallDateString = li.InnerText;
+                                        }
+                                        else if (li.Name.ToLower() == "#text")
+                                        {
+                                            if (li.ParentNode.Name.ToLower() == "li" && li.InnerText.Contains("20"))
+                                            {
+                                                String date = "";
+                                                if (li.PreviousSibling != null && li.PreviousSibling.Name.ToLower() == "abbr")
+                                                {
+                                                    date += li.PreviousSibling.InnerText + " ";
+                                                }
+                                                date += li.InnerText;
+                                                po.RecallDateString = date;
+
+                                            }
+                                        }
+                                    }
+                                    //if (po.RecallDateString == "Jun 7, 2011")
+                                    //{
+                                    //    goto EndParse;
+                                    //}
+                                    tmpItems.Add(po);
+                                }
+                             }
+                        }
+                    }        
+                }
+            } //EndParse:
+
+            foreach (ProductViewModel p in tmpItems.OrderByDescending(x => x._dateRecall))
+            {
+                this.Items.Add(p);
+
+            }
+            tmpItems.Clear();
+            this.IsDataLoaded = true;
+            NotifyPropertyChanged("WebDataRetrived");
+           
+           
+        }
+
+        //Because current contains uncategorized items
+        private void parse_RecallListForegin(object sender, HtmlDocumentLoadCompleted e)
+        {
+            IList<ProductViewModel> tmpItems = new List<ProductViewModel>();
+            IList<HtmlNode> hnc = e.Document.DocumentNode.DescendantNodes().ToList();
+            String currentCategory = "Foreign Product Alerts";
+
+            foreach (HtmlNode node in hnc)
+            {
+                if (node.Name.ToLower() == "div")
+                {
+                    if (node.Attributes.Count == 1 && node.Attributes[0].Name.ToLower() == "class"
+                        && node.Attributes[0].Value.ToLower() == "date")
+                    {
+                        foreach (HtmlNode child in node.DescendantNodes().ToList())
+                        {
+                            if (child.Name.ToLower() == "li")
+                            {
+                                if (child.ParentNode.Name == "ul" && child.ParentNode.Attributes.Count == 0)
+                                {
+                                    ProductViewModel po = new ProductViewModel();
+                                    po.Category = currentCategory;
+                                    foreach (HtmlNode li in child.DescendantNodes().ToList())
+                                    {
+                                        if (li.Name.ToLower() == "a")
+                                        {
+                                            foreach (HtmlAttribute at in li.Attributes)
+                                            {
+                                                if (at.Name.ToLower() == "href")
+                                                {
+                                                    po.Href = at.Value;
+                                                }
+                                            }
+                                            po.ShortDescription = ConvertWhitespacesToSingleSpaces(li.InnerText.Replace("�", "'"));
+                                        }
+                                        else if (li.Name.ToLower() == "span")
+                                        {
+                                            po.RecallDateString = li.InnerText;
+                                        }
+                                        else if (li.Name.ToLower() == "#text" )
+                                        {
+                                            if (li.ParentNode.Name.ToLower() == "li" && li.InnerText.Contains("20"))
+                                            {
+                                                String date = "";
+                                                if (li.PreviousSibling != null && li.PreviousSibling.Name.ToLower() == "abbr")
+                                                {
+                                                    date += li.PreviousSibling.InnerText + " ";
+                                                }
+                                                date += li.InnerText;
+                                                po.RecallDateString = date;
+
+                                            }
+                                        }
+                                    }
+                                    tmpItems.Add(po);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (ProductViewModel p in tmpItems.OrderByDescending(x => x._dateRecall))
+            {
+                this.Items.Add(p);
+            }
+            tmpItems.Clear();
+            this.IsDataLoaded = true;
+            NotifyPropertyChanged("WebDataRetrived");
+        }
+
+
+        private void load_ConsumerProduct(object sender, HtmlDocumentLoadCompleted e)
+        {
+            IList<ProductViewModel> tmpItems = new List<ProductViewModel>();
+            IList<HtmlNode> hnc = e.Document.DocumentNode.DescendantNodes().ToList();
+
+            foreach (HtmlNode node in hnc)
+            {
+                if (node.Name.ToLower() == "h2")
+                {
+                    if (node.InnerText.Contains("Search Results:"))
+                    {
+                        String[] strs = node.InnerText.Split();
+                        int max = int.MinValue;
+                        foreach (String s in strs)
+                        {
+                            int tmp;
+                            if (int.TryParse(s, out tmp) )
+                            {
+                                max = Math.Max(max, tmp);
+                            }
+                        }
+                        if (max != int.MinValue)
+                        {
+                            if (max % 15 > 1)
+                            {
+                                max+=15;
+                                
+                                HtmlWeb webGet = new HtmlWeb();
+                                webGet.LoadCompleted += parse_ConsumerList;
+                                webGet.LoadAsync(Url_HealthCanadaConsumer);
+                                for (int i = 1; i < max; i += 15)
+                                {
+                                    String url = Url_HealthCanadaConsumer + "&next=t&StartIndex="+ i;
+                                    webGet.LoadAsync( url );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void parse_ConsumerList(object sender, HtmlDocumentLoadCompleted e)
+        {
+            IList < ProductViewModel >  tmpItems = new List<ProductViewModel>();
+            IList<HtmlNode> hnc = e.Document.DocumentNode.DescendantNodes().ToList();
+            String currentCategory = "Consumer Product Recalls";
+            foreach (HtmlNode node in hnc)
+            {
+                if (node.Name.ToLower() == "table")
+                {
+                    foreach (HtmlAttribute att in node.Attributes)
+                    {
+                        if (att.Name.ToLower() == "summary" && att.Value == "Search results")
+                        {
+                            foreach (HtmlNode table in node.DescendantNodes().ToList())
+                            {
+                                if (table.Name.ToLower() == "tr")
+                                {
+                                    ProductViewModel po = new ProductViewModel();
+                                    po.Category = currentCategory;
+
+                                    foreach (HtmlNode tr in table.DescendantNodes().ToList())
+                                    {
+                                        if (tr.Name.ToLower() == "th")
+                                        {
+                                            break;
+                                        }
+                                        else if(tr.Name.ToLower() == "td")
+                                        {
+                                            String datetest = tr.InnerText;    
+                                            DateTime test;
+                                            datetest = datetest.Replace(",", "");
+                                            datetest = datetest.Replace("Sept", "Sep");
+                                            datetest = datetest.Replace("y 008", "2008");
+                                            if (DateTime.TryParse(datetest, out test))
+                                            {
+                                                po.RecallDateString = datetest;
+                                            }
+                                            else
+                                            {
+                                                po.ShortDescription = ConvertWhitespacesToSingleSpaces( this.getTitleFromURLNode(tr) ).Trim();
+                                                po.Href = Url_HealthCanadaConsumerPrefix + this.getURLFromNode(tr);
+                                                break;
+                                            }
+                                            
+                                        }    
+                                    }
+                                    if (po.Href != null && po.Href != "")
+                                    {
+                                        tmpItems.Add(po);
+                                    } 
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            foreach (ProductViewModel p in tmpItems.OrderByDescending(x => x._dateRecall))
+            {
+                this.Items.Add(p);
+            }
+            tmpItems.Clear();
+            this.IsDataLoaded = true;
+            NotifyPropertyChanged("WebDataRetrived");
+        }
+
+        public String getURLFromNode(HtmlNode n)
+        {
+            String url = "";
+            if (n.Name.ToLower() == "a")
+            {
+                foreach (HtmlAttribute att in n.Attributes)
+                {
+                    if (att.Name.ToLower() == "href")
+                    {
+                        url = att.Value;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                foreach (HtmlNode i in n.DescendantNodes().ToList())
+                {
+                    String u = getURLFromNode(i);
+                    if (u != "")
+                    {
+                        url = u;
+                        break;
+                    }
+                }
+            }
+            return url;
+        }
+
+        private String getTitleFromURLNode(HtmlNode n)
+        {
+            String title = "";
+            if (n.Name.ToLower() == "a")
+            {
+                title = n.InnerText;
+
+            }else
+            {
+                foreach (HtmlNode i in n.DescendantNodes().ToList())
+                {
+                    String u = getTitleFromURLNode(i);
+                    if (u != "")
+                    {
+                        title = u;
+                        break;
+                    }
+                }
+            }
+            return title;
+        }
+        private void parse_RecallListByCategory(object sender, HtmlDocumentLoadCompleted e)
+        {
+            IList < ProductViewModel >  tmpItems = new List<ProductViewModel>();
             IList<HtmlNode> hnc = e.Document.DocumentNode.DescendantNodes().ToList();
             String currentCategory = null;
             Boolean flag_comment = false;
@@ -156,7 +462,7 @@ namespace com.iCottrell.CanuckProductSafety
                                         po.Href = at.Value;
                                     }
                                 }
-                                po.ShortDescription = li.InnerText;
+                                po.ShortDescription = ConvertWhitespacesToSingleSpaces(li.InnerText.Replace("�", "'")); 
                             }
                             else if (li.Name.ToLower() == "span")
                             {
@@ -184,365 +490,26 @@ namespace com.iCottrell.CanuckProductSafety
             foreach (ProductViewModel p in tmpItems.OrderByDescending(x => x._dateRecall))
             {
                 this.Items.Add(p);
-
             }
             this.IsDataLoaded = true;
-            NotifyPropertyChanged("WebDataRetrived");
-            
+            NotifyPropertyChanged("WebDataRetrived"); 
         }
 
-        
-       
-        private CollectionViewSource childSafetyItems;
-        public CollectionViewSource ChildSafetyItems
+        public static string ConvertWhitespacesToSingleSpaces(string value)
         {
-            get
+            if (value != null)
             {
-                if (null == childSafetyItems)
-                {
-                    childSafetyItems = new CollectionViewSource { Source = Items };
-                    childSafetyItems.View.Filter = (x) => FilterItemsByCategory(x, "Child Safety");
-                }
-                return childSafetyItems;
+                value = Regex.Replace(value, @"\s+", " ");
+                return value;
+            }
+            else
+            {
+                return " ";
             }
         }
 
-        private CollectionViewSource consumerItems;
-        public CollectionViewSource ConsumerItems
+        private bool FilterItemsByCategory(Object product, String category)
         {
-            get
-            {
-                if (null == consumerItems)
-                {
-                    consumerItems = new CollectionViewSource { Source = Items };
-                    consumerItems.View.Filter = (x) => FilterItemsByCategory(x, "Consumer Product Safety");
-                }
-                return consumerItems;
-            }
-        }
-
-        private CollectionViewSource dietarySupplementsItems;
-        public CollectionViewSource DietarySupplementsItems
-        {
-            get
-            {
-                if (null == dietarySupplementsItems)
-                {
-                    dietarySupplementsItems = new CollectionViewSource { Source = Items };
-                    dietarySupplementsItems.View.Filter = (x) => FilterItemsByCategory(x, "Dietary Supplements");
-                }
-                return dietarySupplementsItems;
-            }
-        }
-
-        private CollectionViewSource diseasesItems;
-        public CollectionViewSource DiseasesItems
-        {
-            get
-            {
-                if (null == diseasesItems)
-                {
-                    diseasesItems = new CollectionViewSource { Source = Items };
-                    diseasesItems.View.Filter = (x) => FilterItemsByCategory(x, "Diseases and Conditions");
-                }
-                return diseasesItems;
-            }
-        }
-
-        private CollectionViewSource drugsItems;
-        public CollectionViewSource DrugsItems
-        {
-            get
-            {
-                if (null == drugsItems)
-                {
-                    drugsItems = new CollectionViewSource { Source = Items };
-                    drugsItems.View.Filter = (x) => FilterItemsByCategory(x, "Drugs and Health Products");
-                }
-                return drugsItems;
-            }
-        }
-
-        private CollectionViewSource eyeItems;
-        public CollectionViewSource EyeItems
-        {
-            get
-            {
-                if (null == eyeItems)
-                {
-                    eyeItems = new CollectionViewSource { Source = Items };
-                    eyeItems.View.Filter = (x) => FilterItemsByCategory(x, "Eye Care");
-                }
-                return eyeItems;
-            }
-        }
-        
-        private CollectionViewSource foodAllergiesItems;
-        public CollectionViewSource FoodAllergiesItems
-        {
-            get
-            {
-                if (null == foodAllergiesItems)
-                {
-                    foodAllergiesItems = new CollectionViewSource { Source = Items };
-                    foodAllergiesItems.View.Filter = (x) => FilterItemsByCategory(x, "Food Allergies");
-                }
-                return foodAllergiesItems;
-            }
-        }    
-        
-        private CollectionViewSource foodSafetyItems;
-        public CollectionViewSource FoodSafetyItems
-        {
-            get
-            {
-                if (null == foodSafetyItems)
-                {
-                    foodSafetyItems = new CollectionViewSource { Source = Items };
-                    foodSafetyItems.View.Filter = (x) => FilterItemsByCategory(x, "Food Safety");
-                }
-                return foodSafetyItems;
-            }
-        }
-           
-        private CollectionViewSource fraudItems;
-        public CollectionViewSource FraudItems
-        {
-            get
-            {
-                if (null == fraudItems)
-                {
-                    fraudItems = new CollectionViewSource { Source = Items };
-                    fraudItems.View.Filter = (x) => FilterItemsByCategory(x, "Fraud");
-                }
-                return fraudItems;
-            }
-        }     
-             
-        private CollectionViewSource impotenceItems;
-        public CollectionViewSource ImpotenceItems
-        {
-            get
-            {
-                if (null == impotenceItems)
-                {
-                    impotenceItems = new CollectionViewSource { Source = Items };
-                    impotenceItems.View.Filter = (x) => FilterItemsByCategory(x, "Impotence");
-                }
-                return impotenceItems;
-            }
-        }
-    
-        private CollectionViewSource infantCareItems;
-        public CollectionViewSource InfantCareItems
-        {
-            get
-            {
-                if (null == infantCareItems)
-                {
-                    infantCareItems = new CollectionViewSource { Source = Items };
-                    infantCareItems.View.Filter = (x) => FilterItemsByCategory(x, "Infant Care");
-                }
-                return infantCareItems;
-            }
-        }
-        
-        private CollectionViewSource influenzaItems;
-        public CollectionViewSource InfluenzaItems
-        {
-            get
-            {
-                if (null == influenzaItems)
-                {
-                    influenzaItems = new CollectionViewSource { Source = Items };
-                    influenzaItems.View.Filter = (x) => FilterItemsByCategory(x, "Influenza and Avian Flu");
-                }
-                return influenzaItems;
-            }
-        }
-
-        private CollectionViewSource jewelleryItems;
-        public CollectionViewSource JewelleryItems
-        {
-            get
-            {
-                if (null == jewelleryItems)
-                {
-                    jewelleryItems = new CollectionViewSource { Source = Items };
-                    jewelleryItems.View.Filter = (x) => FilterItemsByCategory(x, "Jewellery");
-                }
-                return jewelleryItems;
-            }
-        }
-        
-        private CollectionViewSource labellingItems;
-        public CollectionViewSource LabellingItems
-        {
-            get
-            {
-                if (null == labellingItems)
-                {
-                    labellingItems = new CollectionViewSource { Source = Items };
-                    labellingItems.View.Filter = (x) => FilterItemsByCategory(x, "Labelling");
-                }
-                return labellingItems;
-            }
-        }     
-              
-        private CollectionViewSource leadItems;
-        public CollectionViewSource LeadItems
-        {
-            get
-            {
-                if (null == leadItems)
-                {
-                    leadItems = new CollectionViewSource { Source = Items };
-                    leadItems.View.Filter = (x) => FilterItemsByCategory(x, "Lead");
-                }
-                return leadItems;
-            }
-        }      
-        private CollectionViewSource medicalItems; 
-        public CollectionViewSource MedicalItems
-        {
-            get
-            {
-                if (null == medicalItems)
-                {
-                    medicalItems = new CollectionViewSource { Source = Items };
-                    medicalItems.View.Filter = (x) => FilterItemsByCategory(x, "Medical Devices and Equipment");
-                }
-                return medicalItems;
-            }
-        }
-
-        private CollectionViewSource mercuryItems;
-        public CollectionViewSource MercuryItems
-        {
-            get
-            {
-                if (null == mercuryItems)
-                {
-                    mercuryItems = new CollectionViewSource { Source = Items };
-                    mercuryItems.View.Filter = (x) => FilterItemsByCategory(x, "Mercury");
-                }
-                return mercuryItems;
-            }
-        }   
-           
-        private CollectionViewSource mouldItems; 
-        public CollectionViewSource MouldItems
-        {
-            get
-            {
-                if (null == mouldItems)
-                {
-                    mouldItems = new CollectionViewSource { Source = Items };
-                    mouldItems.View.Filter = (x) => FilterItemsByCategory(x, "Mould");
-                }
-                return mouldItems;
-            }
-        }       
-               
-        private CollectionViewSource naturalItems; 
-        public CollectionViewSource NaturalItems
-        {
-            get
-            {
-                if (null == naturalItems)
-                {
-                    naturalItems = new CollectionViewSource { Source = Items };
-                    naturalItems.View.Filter = (x) => FilterItemsByCategory(x, "Natural Health Products");
-                }
-                return naturalItems;
-            }
-        }
-       
-        private CollectionViewSource oralItems; 
-        public CollectionViewSource OralItems
-        {
-            get
-            {
-                if (null == oralItems)
-                {
-                    oralItems = new CollectionViewSource { Source = Items };
-                    oralItems.View.Filter = (x) => FilterItemsByCategory(x, "Oral Hygiene Products");
-                }
-                return oralItems;
-            }
-        }
-              
-        private CollectionViewSource packagingItems; 
-        public CollectionViewSource PackagingItems
-        {
-            get
-            {
-                if (null == packagingItems)
-                {
-                    packagingItems = new CollectionViewSource { Source = Items };
-                    packagingItems.View.Filter = (x) => FilterItemsByCategory(x, "Packaging");
-                }
-                return packagingItems;
-            }
-        }
-        
-        private CollectionViewSource sexualItems; 
-        public CollectionViewSource SexualItems
-        {
-            get
-            {
-                if (null == sexualItems)
-                {
-                    sexualItems = new CollectionViewSource { Source = Items };
-                    sexualItems.View.Filter = (x) => FilterItemsByCategory(x, "Sexual Enhancement Products");
-                }
-                return sexualItems;
-            }
-        }
-         
-        private CollectionViewSource travelItems; 
-        public CollectionViewSource TravelItems
-        {
-            get
-            {
-                if (null == travelItems)
-                {
-                    travelItems = new CollectionViewSource { Source = Items };
-                    travelItems.View.Filter = (x) => FilterItemsByCategory(x, "Travel Health");
-                }
-                return travelItems;
-            }
-        }
-         
-        private CollectionViewSource veterinaryItems;
-        public CollectionViewSource VeterinaryItems
-        {
-            get
-            {
-                if (null == veterinaryItems)
-                {
-                    veterinaryItems = new CollectionViewSource { Source = Items };
-                    veterinaryItems.View.Filter = (x) => FilterItemsByCategory(x, "Veterinary Drugs");
-                }
-                return veterinaryItems;
-            }
-        }
-
-        private CollectionViewSource weightItems;
-        public CollectionViewSource WeightItems
-        {
-            get
-            {
-                if (null == weightItems)
-                {
-                    weightItems = new CollectionViewSource { Source = Items };
-                    weightItems.View.Filter = (x) => FilterItemsByCategory(x, "Weight Loss");
-                }
-                return weightItems;
-            }
-        }
-                 
-        private bool FilterItemsByCategory(Object product, String category){
             if (product is ProductViewModel)
             {
                 return ((ProductViewModel)product).Category == category;
@@ -550,17 +517,46 @@ namespace com.iCottrell.CanuckProductSafety
             return false;
         }
 
-        private CollectionViewSource bacteriaItems;
-        public CollectionViewSource BacteriaItems
+        private CollectionViewSource foreignProductAlerts;
+        public CollectionViewSource ForeignProductAlerts
         {
             get
             {
-                if (null == bacteriaItems)
+                if (null == foreignProductAlerts)
                 {
-                    bacteriaItems = new CollectionViewSource { Source = Items };
-                    bacteriaItems.View.Filter = (x) => FilterItemsByCategory(x, "Bacteria (including E. coli and Salmonella)");
+                    foreignProductAlerts = new CollectionViewSource { Source = Items };
+                    foreignProductAlerts.View.Filter = (x) => FilterItemsByCategory(x, "Foreign Product Alerts");
                 }
-                return bacteriaItems;
+                return foreignProductAlerts;
+            }
+        }
+
+        
+        private CollectionViewSource advisoriesWarningsRecalls;
+        public CollectionViewSource AdvisoriesWarningsRecalls
+        {
+            get
+            {
+                if (null == advisoriesWarningsRecalls)
+                {
+                    advisoriesWarningsRecalls = new CollectionViewSource { Source = Items };
+                    advisoriesWarningsRecalls.View.Filter = (x) => FilterItemsByCategory(x, "Advisories, Warnings and Recalls");
+                }
+                return advisoriesWarningsRecalls;
+            }
+        }
+
+        private CollectionViewSource consumerProductRecalls;
+        public CollectionViewSource ConsumerProductRecalls
+        {
+            get
+            {
+                if (null == consumerProductRecalls)
+                {
+                    consumerProductRecalls = new CollectionViewSource { Source = Items };
+                    consumerProductRecalls.View.Filter = (x) => FilterItemsByCategory(x, "Consumer Product Recalls");
+                }
+                return consumerProductRecalls;
             }
         }
 

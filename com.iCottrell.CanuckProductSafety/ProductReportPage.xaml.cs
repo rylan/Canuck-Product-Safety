@@ -16,11 +16,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Phone.Tasks;
 using Microsoft.Phone.Net.NetworkInformation;
+using System.Windows.Media.Imaging;
 
 namespace com.iCottrell.CanuckProductSafety
 {
     public partial class ProductReportPage : PhoneApplicationPage
     {
+        private String Url_HealthCanadaConsumerPrefix = "http://cpsr-rspc.hc-sc.gc.ca";
+
+        MarketplaceDetailTask _marketPlaceDetailTask = new MarketplaceDetailTask();
         private String CurrentPage;
         public static String CndHealthSite = "http://www.hc-sc.gc.ca";
         public ProductReportPage()
@@ -32,6 +36,7 @@ namespace com.iCottrell.CanuckProductSafety
         protected override void OnNavigatedTo(System.Windows.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+
             string href = "";
             
             if (DeviceNetworkInformation.IsNetworkAvailable)
@@ -70,10 +75,20 @@ namespace com.iCottrell.CanuckProductSafety
 
             if (CurrentPage != "")
             {
-                LoadingProductScreen.IsOpen = true;
-                HtmlWeb webGet = new HtmlWeb();
-                webGet.LoadCompleted += parse_DownloadProductReportPageCompleted;
-                webGet.LoadAsync(CurrentPage, Encoding.UTF8);
+                if (CurrentPage.Contains("cpsr-rspc"))
+                {
+                    LoadingProductScreen.IsOpen = true;
+                    HtmlWeb webGet = new HtmlWeb();
+                    webGet.LoadCompleted += parse_ConsumerReportsPageCompleted;
+                    webGet.LoadAsync(CurrentPage, Encoding.UTF8);
+                }
+                else
+                {
+                    LoadingProductScreen.IsOpen = true;
+                    HtmlWeb webGet = new HtmlWeb();
+                    webGet.LoadCompleted += parse_DownloadProductReportPageCompleted;
+                    webGet.LoadAsync(CurrentPage, Encoding.UTF8);
+                }
             }
         }
 
@@ -90,6 +105,407 @@ namespace com.iCottrell.CanuckProductSafety
             }
         }
 
+        public void parse_ConsumerReportsPageCompleted(Object sender, HtmlDocumentLoadCompleted e)
+        {
+            if (e != null && e.Document != null && e.Document.DocumentNode != null)
+            {
+                IList<Block> pageBody = new List<Block>();
+                IList<HtmlNode> hnc = e.Document.DocumentNode.DescendantNodes().ToList();
+                Paragraph paragraph = new Paragraph();
+                Boolean content_flag = false;
+                Boolean title_flag = false;
+                foreach (HtmlNode node in hnc)
+                {
+                    if (node.Name.ToLower() == "#comment")
+                    {
+                        if (node.InnerText.Contains("CONTENT TITLE BEGINS"))
+                        {
+                            content_flag = true;
+                        }
+                        else if (content_flag && node.InnerText.Contains("CONTENT ENDS"))
+                        {
+                            content_flag = false;
+                        }
+
+                    }else if(content_flag && node.Name.ToLower() == "h2")
+                    {
+                        if (node.InnerText.Contains("Product Name"))
+                        {
+                            title_flag = true;
+                        }
+                        else
+                        {
+                            title_flag = false;
+                            if (paragraph.Inlines.Count > 0)
+                            {
+                                pageBody.Add(paragraph);
+                                paragraph = new Paragraph();
+                            }
+                            Paragraph h2 = new Paragraph();
+                            h2.FontSize = 25.333;
+                            h2.Inlines.Add(ConvertWhitespacesToSingleSpaces(node.InnerText.Trim()));
+                            pageBody.Add(h2);
+                        }
+                    }
+                    else if (content_flag && node.Name.ToLower() == "img")
+                    {
+                        if (paragraph.Inlines.Count > 0)
+                        {
+                            pageBody.Add(paragraph);
+                            paragraph = new Paragraph();
+                        }
+
+                        String href = "";
+                        foreach (HtmlAttribute att in node.Attributes)
+                        {
+                            if (att.Name.ToLower() == "src")
+                            {
+                                href = att.Value;
+                            }
+                        }
+                        if (href != "")
+                        {
+                            InlineUIContainer con = new InlineUIContainer();
+                            Image i = new Image();
+                            i.Source = new BitmapImage(new Uri(Url_HealthCanadaConsumerPrefix + href, UriKind.Absolute));
+                            con.Child = i;
+                            paragraph.Inlines.Add(con);
+                        }
+                    }
+                    else if (content_flag && node.Name.ToLower() == "p")
+                    {
+                        if (ConvertWhitespacesToSingleSpaces(node.InnerText) == " ")
+                        {
+                            continue;
+                        }
+                        if (title_flag)
+                        {
+                            PageTitle.Text = ConvertWhitespacesToSingleSpaces(node.InnerText.Replace("�", "'").Trim());
+                            title_flag = false;
+                        }
+                        else
+                        {
+                            if (paragraph.Inlines.Count > 0)
+                            {
+                                pageBody.Add(paragraph);
+                                paragraph = new Paragraph();
+                            }
+
+                            Paragraph np = new Paragraph();
+
+                            foreach (HtmlNode pc in node.DescendantNodes().ToList())
+                            {
+                                if (content_flag && node.Name.ToLower() == "ul")
+                                {
+                                    foreach (HtmlNode a in node.DescendantNodes().ToList())
+                                    {
+                                        if (a.Name.ToLower() == "a")
+                                        {
+                                            Boolean err_flag = false;
+                                            Hyperlink hl = new Hyperlink();
+
+                                            hl.Inlines.Add(ConvertWhitespacesToSingleSpaces(a.InnerText.Replace("&nbsp;", "")));
+                                            foreach (HtmlAttribute att1 in a.Attributes)
+                                            {
+                                                if (att1.Name.ToLower() == "href")
+                                                {
+                                                    try
+                                                    {
+                                                        if (att1.Value.ToCharArray()[0] != '#')
+                                                        {
+                                                            hl.NavigateUri = new Uri("/ProductReportPage.xaml?external=true&href=" + att1.Value, UriKind.Relative);
+
+                                                        }
+                                                        else
+                                                        {
+                                                            err_flag = true;
+                                                        }
+                                                    }
+                                                    catch (Exception err)
+                                                    {
+                                                        err_flag = true;
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                            if (!err_flag)
+                                            {
+                                                np.Inlines.Add(hl);
+                                            }
+                                            else
+                                            {
+                                                Run r = new Run();
+                                                r.Text = ConvertWhitespacesToSingleSpaces(a.InnerText.Replace("&nbsp;", ""));
+                                                np.Inlines.Add(r);
+                                            }
+                                        }
+                                        else if (a.Name.ToLower() == "li")
+                                        {
+                                            Bold b = new Bold();
+                                            b.Inlines.Add("- ");
+                                            np.Inlines.Add(b);
+                                        }
+                                        else if (a.Name.ToLower() == "b" || a.ParentNode.Name.ToLower() == "strong")
+                                        {
+                                            Bold b = new Bold();
+                                            b.Inlines.Add(ConvertWhitespacesToSingleSpaces(a.InnerText.Replace("&nbsp;", "")));
+                                            np.Inlines.Add(b);
+                                        }
+                                        else if (a.Name.ToLower() == "i")
+                                        {
+                                            Italic i = new Italic();
+                                            i.Inlines.Add(ConvertWhitespacesToSingleSpaces(a.InnerText.Replace("&nbsp;", "")));
+                                            np.Inlines.Add(i);
+                                        }
+                                        else if (a.Name.ToLower() == "#text")
+                                        {
+                                            if (a.ParentNode.Name.ToLower() != "a" && a.ParentNode.Name.ToLower() != "b" && a.ParentNode.Name.ToLower() != "strong" && a.ParentNode.Name.ToLower() != "i")
+                                            {
+
+                                                String str = ConvertWhitespacesToSingleSpaces(a.InnerText);
+                                                if (str != " ")
+                                                {
+                                                    str = str.Replace("&quot;", "\"");
+                                                    Run run = new Run();
+                                                    run.Text = str.Replace("&nbsp;", "");
+                                                    np.Inlines.Add(run);
+                                                }
+                                                if (a.NextSibling != null && a.NextSibling.Name.ToLower() == "li")
+                                                {
+                                                    np.Inlines.Add(new LineBreak());
+                                                }
+                                            }
+
+                                        }
+                                    }
+                                    np.Inlines.Add(new LineBreak());
+                                }
+                                else if (pc.Name.ToLower() == "a")
+                                {
+                                    if (pc.ParentNode.Name.ToLower() != "i" && pc.ParentNode.Name.ToLower() != "b" && pc.ParentNode.Name.ToLower() != "strong")
+                                    {
+                                        Boolean image_flag = false;
+                                        Boolean flag_local = false;
+                                        Hyperlink hl = new Hyperlink();
+
+                                        hl.Inlines.Add(ConvertWhitespacesToSingleSpaces(pc.InnerText.Replace("&nbsp;", "")));
+
+                                        foreach (HtmlAttribute att1 in pc.Attributes)
+                                        {
+                                            if (att1.Name.ToLower() == "href")
+                                            {
+                                                try
+                                                {
+                                                    if (att1.Value.ToCharArray()[0] != '#')
+                                                    {
+                                                        hl.NavigateUri = new Uri("/ProductReportPage.xaml?external=true&href=" + att1.Value, UriKind.Relative);
+                                                    }
+                                                    else
+                                                    {
+                                                        flag_local = true;
+                                                    }
+                                                }
+                                                catch (Exception err)
+                                                {
+                                                    image_flag = true;
+                                                }
+                                            }
+                                            else if (att1.Name.ToLower() == "class" && att1.Value == "image")
+                                            {
+                                                image_flag = true;
+                                            }
+                                        }
+                                        if (!image_flag && !flag_local)
+                                        {
+                                            np.Inlines.Add(hl);
+                                        }
+                                        else if (flag_local)
+                                        {
+                                            Run r = new Run();
+                                            r.Text = ConvertWhitespacesToSingleSpaces(pc.InnerText.Replace("&nbsp;", ""));
+                                            np.Inlines.Add(r);
+                                        }
+                                    }
+                                }
+                                else if (pc.Name.ToLower() == "#text")
+                                {
+                                    if (pc.ParentNode.Name.ToLower() != "a" && pc.ParentNode.Name.ToLower() != "b" && pc.ParentNode.Name.ToLower() != "strong" && pc.ParentNode.Name.ToLower() != "i")
+                                    {
+                                        String str = ConvertWhitespacesToSingleSpaces(pc.InnerText);
+                                        if (str != " ")
+                                        {
+                                            str = str.Replace("&quot;", "\"");
+                                            Run run = new Run();
+                                            run.Text = str.Replace("&nbsp;", "");
+                                            np.Inlines.Add(run);
+                                        }
+                                    }
+                                }
+                                else if (pc.Name.ToLower() == "b" || pc.Name.ToLower() == "strong")
+                                {
+                                    Bold b = new Bold();
+                                    foreach (HtmlNode n in pc.DescendantNodes().ToList())
+                                    {
+                                        if (n.Name.ToLower() == "#text" && n.ParentNode.Name.ToLower() != "a")
+                                        {
+                                            b.Inlines.Add(ConvertWhitespacesToSingleSpaces(n.InnerText.Replace("&nbsp;", "")));
+                                        }
+                                        else if (n.Name.ToLower() == "a")
+                                        {
+                                            Boolean image_flag = false;
+                                            Boolean flag_local = false;
+                                            Hyperlink hl = new Hyperlink();
+
+                                            hl.Inlines.Add(ConvertWhitespacesToSingleSpaces(n.InnerText.Replace("&nbsp;", "")));
+
+                                            foreach (HtmlAttribute att1 in n.Attributes)
+                                            {
+                                                if (att1.Name.ToLower() == "href")
+                                                {
+                                                    try
+                                                    {
+                                                        if (att1.Value.ToCharArray()[0] != '#')
+                                                        {
+                                                            hl.NavigateUri = new Uri("/ProductReportPage.xaml?external=true&href=" + att1.Value, UriKind.Relative);
+                                                        }
+                                                        else
+                                                        {
+                                                            flag_local = true;
+                                                        }
+                                                    }
+                                                    catch (Exception err)
+                                                    {
+                                                        image_flag = true;
+                                                    }
+                                                }
+                                                else if (att1.Name.ToLower() == "class" && att1.Value == "image")
+                                                {
+                                                    image_flag = true;
+                                                }
+                                            }
+                                            if (!image_flag && !flag_local)
+                                            {
+                                                b.Inlines.Add(hl);
+                                            }
+                                            else
+                                            {
+                                                b.Inlines.Add(ConvertWhitespacesToSingleSpaces(n.InnerText.Replace("&nbsp;", "")));
+                                            }
+                                        }
+                                    }
+
+                                    np.Inlines.Add(b);
+                                }
+                                else if (pc.Name.ToLower() == "br")
+                                {
+                                    // Run r = new Run();
+                                    // r.Text = "\n";
+                                    //  np.Inlines.Add(r);
+                                }
+                                else if(pc.Name.ToLower() == "img" )
+                                {
+                                    String href = "";
+                                    foreach (HtmlAttribute att in pc.Attributes)
+                                    {
+                                        if (att.Name.ToLower() == "src")
+                                        {
+                                            href = att.Value;
+                                        }
+                                    }
+                                    if (href != "")
+                                    {
+                                        InlineUIContainer con = new InlineUIContainer();
+                                        Image i = new Image();
+                                        i.Source = new BitmapImage(new Uri(Url_HealthCanadaConsumerPrefix+href, UriKind.Absolute));
+                                        con.Child = i;
+                                        np.Inlines.Add(con);
+                                    }
+                                }
+                                else if (pc.Name.ToLower() == "i")
+                                {
+                                    Italic i = new Italic();
+                                    foreach (HtmlNode n in pc.DescendantNodes().ToList())
+                                    {
+                                        if (n.Name.ToLower() == "#text" && n.ParentNode.Name.ToLower() != "a")
+                                        {
+                                            i.Inlines.Add(ConvertWhitespacesToSingleSpaces(n.InnerText.Replace("&nbsp;", "")));
+                                        }
+                                        else if (n.Name.ToLower() == "a")
+                                        {
+                                            Boolean image_flag = false;
+                                            Boolean flag_local = false;
+                                            Hyperlink hl = new Hyperlink();
+
+                                            hl.Inlines.Add(ConvertWhitespacesToSingleSpaces(n.InnerText.Replace("&nbsp;", "")));
+
+                                            foreach (HtmlAttribute att1 in n.Attributes)
+                                            {
+                                                if (att1.Name.ToLower() == "href")
+                                                {
+                                                    try
+                                                    {
+                                                        if (att1.Value.ToCharArray()[0] != '#')
+                                                        {
+                                                            hl.NavigateUri = new Uri("/ProductReportPage.xaml?external=true&href=" + att1.Value, UriKind.Relative);
+                                                        }
+                                                        else
+                                                        {
+                                                            flag_local = true;
+                                                        }
+                                                    }
+                                                    catch (Exception err)
+                                                    {
+                                                        image_flag = true;
+                                                    }
+                                                }
+                                                else if (att1.Name.ToLower() == "class" && att1.Value == "image")
+                                                {
+                                                    image_flag = true;
+                                                }
+                                            }
+                                            if (!image_flag && !flag_local)
+                                            {
+                                                i.Inlines.Add(hl);
+                                            }
+                                            else
+                                            {
+                                                i.Inlines.Add(n.InnerText.Replace("&nbsp;", ""));
+                                            }
+                                        }
+                                    }
+
+                                    np.Inlines.Add(i);
+                                }
+                            }
+                            np.Inlines.Add(new LineBreak());
+                            pageBody.Add(np);
+
+                        }
+                    }
+                }
+                if (paragraph != null && paragraph.Inlines.Count > 0)
+                {
+                    pageBody.Add(paragraph);
+                }
+                foreach (Block b in pageBody)
+                {
+                    RichTextBox rtb = new RichTextBox();
+                    rtb.IsReadOnly = true;
+                    rtb.VerticalAlignment = VerticalAlignment.Top;
+                    rtb.Blocks.Add(b);
+                    PageBody.Children.Add(rtb);
+
+                }
+                LoadingProductScreen.IsOpen = false;
+                PageBody.InvalidateArrange();
+                PageBody.InvalidateMeasure();
+                scrollerViewer.InvalidateArrange();
+                scrollerViewer.InvalidateMeasure();
+                scrollerViewer.InvalidateScrollInfo();
+                Content.InvalidateArrange();
+                Content.InvalidateMeasure();
+            }
+        }
 
         public void parse_DownloadProductReportPageCompleted(Object sender, HtmlDocumentLoadCompleted e)
         {
@@ -105,7 +521,7 @@ namespace com.iCottrell.CanuckProductSafety
                 {
                     if (htmlNode.Name.ToLower() == "h1" && htmlNode.Attributes.Count == 0)
                     {
-                        PageTitle.Text = htmlNode.InnerText;
+                        PageTitle.Text = htmlNode.InnerText.Replace("�", "'");
                         content_flag = true;
 
                     }
@@ -177,7 +593,7 @@ namespace com.iCottrell.CanuckProductSafety
                                     else
                                     {
                                         Run r = new Run();
-                                        r.Text = a.InnerText;
+                                        r.Text = a.InnerText.Replace("&nbsp;", "");
                                         np.Inlines.Add(r);
                                     }
                                 }
@@ -190,13 +606,13 @@ namespace com.iCottrell.CanuckProductSafety
                                 else if (a.Name.ToLower() == "b" || a.ParentNode.Name.ToLower() == "strong")
                                 {
                                     Bold b = new Bold();
-                                    b.Inlines.Add(a.InnerText);
+                                    b.Inlines.Add(a.InnerText.Replace("&nbsp;", ""));
                                     np.Inlines.Add(b);
                                 }
                                 else if (a.Name.ToLower() == "i")
                                 {
                                     Italic i = new Italic();
-                                    i.Inlines.Add(a.InnerText);
+                                    i.Inlines.Add(a.InnerText.Replace("&nbsp;", ""));
                                     np.Inlines.Add(i);
                                 }
                                 else if (a.Name.ToLower() == "#text")
@@ -209,7 +625,7 @@ namespace com.iCottrell.CanuckProductSafety
                                         {
                                             str = str.Replace("&quot;", "\"");
                                             Run run = new Run();
-                                            run.Text = str;
+                                            run.Text = str.Replace("&nbsp;", "");
                                             np.Inlines.Add(run);
                                         }
                                         if (a.NextSibling != null && a.NextSibling.Name.ToLower() == "li")
@@ -245,7 +661,7 @@ namespace com.iCottrell.CanuckProductSafety
                                         Boolean err_flag = false;
                                         Hyperlink hl = new Hyperlink();
 
-                                        hl.Inlines.Add(a.InnerText);
+                                        hl.Inlines.Add(a.InnerText.Replace("&nbsp;", ""));
                                         foreach (HtmlAttribute att1 in a.Attributes)
                                         {
                                             if (att1.Name.ToLower() == "href")
@@ -276,7 +692,7 @@ namespace com.iCottrell.CanuckProductSafety
                                         else
                                         {
                                             Run r = new Run();
-                                            r.Text = a.InnerText;
+                                            r.Text = a.InnerText.Replace("&nbsp;", "");
                                             np.Inlines.Add(r);
                                         }
                                     }
@@ -289,13 +705,13 @@ namespace com.iCottrell.CanuckProductSafety
                                     else if (a.Name.ToLower() == "b" || a.ParentNode.Name.ToLower() == "strong")
                                     {
                                         Bold b = new Bold();
-                                        b.Inlines.Add(a.InnerText);
+                                        b.Inlines.Add(a.InnerText.Replace("&nbsp;", ""));
                                         np.Inlines.Add(b);
                                     }
                                     else if (a.Name.ToLower() == "i")
                                     {
                                         Italic i = new Italic();
-                                        i.Inlines.Add(a.InnerText);
+                                        i.Inlines.Add(a.InnerText.Replace("&nbsp;", ""));
                                         np.Inlines.Add(i);
                                     }
                                     else if (a.Name.ToLower() == "#text")
@@ -308,7 +724,7 @@ namespace com.iCottrell.CanuckProductSafety
                                             {
                                                 str = str.Replace("&quot;", "\"");
                                                 Run run = new Run();
-                                                run.Text = str;
+                                                run.Text = str.Replace("&nbsp;", "");
                                                 np.Inlines.Add(run);
                                             }
                                             if (a.NextSibling != null && a.NextSibling.Name.ToLower() == "li")
@@ -328,7 +744,7 @@ namespace com.iCottrell.CanuckProductSafety
                                     Boolean flag_local = false;
                                     Hyperlink hl = new Hyperlink();
 
-                                    hl.Inlines.Add(pc.InnerText);
+                                    hl.Inlines.Add(pc.InnerText.Replace("&nbsp;", ""));
 
                                     foreach (HtmlAttribute att1 in pc.Attributes)
                                     {
@@ -362,7 +778,7 @@ namespace com.iCottrell.CanuckProductSafety
                                     else if (flag_local)
                                     {
                                         Run r = new Run();
-                                        r.Text = pc.InnerText;
+                                        r.Text = pc.InnerText.Replace("&nbsp;", "");
                                         np.Inlines.Add(r);
                                     }
                                 }
@@ -376,7 +792,7 @@ namespace com.iCottrell.CanuckProductSafety
                                     {
                                         str = str.Replace("&quot;", "\"");
                                         Run run = new Run();
-                                        run.Text = str;
+                                        run.Text = str.Replace("&nbsp;", "");
                                         np.Inlines.Add(run);
                                     }
                                 }
@@ -388,7 +804,7 @@ namespace com.iCottrell.CanuckProductSafety
                                 {
                                     if (n.Name.ToLower() == "#text" && n.ParentNode.Name.ToLower() != "a")
                                     {
-                                        b.Inlines.Add(n.InnerText);
+                                        b.Inlines.Add(n.InnerText.Replace("&nbsp;", ""));
                                     }
                                     else if (n.Name.ToLower() == "a")
                                     {
@@ -396,7 +812,7 @@ namespace com.iCottrell.CanuckProductSafety
                                         Boolean flag_local = false;
                                         Hyperlink hl = new Hyperlink();
 
-                                        hl.Inlines.Add(n.InnerText);
+                                        hl.Inlines.Add(n.InnerText.Replace("&nbsp;", ""));
 
                                         foreach (HtmlAttribute att1 in n.Attributes)
                                         {
@@ -429,7 +845,7 @@ namespace com.iCottrell.CanuckProductSafety
                                         }
                                         else
                                         {
-                                            b.Inlines.Add(n.InnerText);
+                                            b.Inlines.Add(n.InnerText.Replace("&nbsp;", ""));
                                         }
                                     }
                                 }
@@ -449,7 +865,7 @@ namespace com.iCottrell.CanuckProductSafety
                                 {
                                     if (n.Name.ToLower() == "#text" && n.ParentNode.Name.ToLower() != "a")
                                     {
-                                        i.Inlines.Add(n.InnerText);
+                                        i.Inlines.Add(n.InnerText.Replace("&nbsp;", ""));
                                     }
                                     else if (n.Name.ToLower() == "a")
                                     {
@@ -457,7 +873,7 @@ namespace com.iCottrell.CanuckProductSafety
                                         Boolean flag_local = false;
                                         Hyperlink hl = new Hyperlink();
 
-                                        hl.Inlines.Add(n.InnerText);
+                                        hl.Inlines.Add(n.InnerText.Replace("&nbsp;", ""));
 
                                         foreach (HtmlAttribute att1 in n.Attributes)
                                         {
@@ -490,7 +906,7 @@ namespace com.iCottrell.CanuckProductSafety
                                         }
                                         else
                                         {
-                                            i.Inlines.Add(n.InnerText);
+                                            i.Inlines.Add(n.InnerText.Replace("&nbsp;", ""));
                                         }
                                     }
                                 }
@@ -523,6 +939,8 @@ namespace com.iCottrell.CanuckProductSafety
                 scrollerViewer.InvalidateArrange();
                 scrollerViewer.InvalidateMeasure();
                 scrollerViewer.InvalidateScrollInfo();
+                Content.InvalidateArrange();
+                Content.InvalidateMeasure();
             }
         }
 
