@@ -26,6 +26,7 @@ namespace com.iCottrell.CanuckProductSafety
         private String Url_HealthCanadaProductRecall_f2011 = "http://www.hc-sc.gc.ca/ahc-asc/media/advisories-avis/_fpa-ape_2011/index-eng.php";
         private String Url_HealthCanadaConsumer = "http://cpsr-rspc.hc-sc.gc.ca/PR-RP/results-resultats-eng.jsp?searchstring=&searchyear=2012&searchyear=2011&searchcategory=";
         private String Url_HealthCanadaConsumerPrefix = "http://cpsr-rspc.hc-sc.gc.ca";
+        private String Url_FoodSafety = "http://www.inspection.gc.ca/about-the-cfia/newsroom/food-recalls-and-allergy-alerts/eng/1299076382077/1299076493846";
         //private String Url_HealthCanadaProductRecallCategory = "http://www.hc-sc.gc.ca/ahc-asc/media/advisories-avis/alpha-eng.php";
         //private String Url_Prefix = "http://www.hc-sc.gc.ca";
 
@@ -87,7 +88,11 @@ namespace com.iCottrell.CanuckProductSafety
             HtmlWeb cGet = new HtmlWeb();
             cGet.LoadCompleted += load_ConsumerProduct;
             cGet.LoadAsync(Url_HealthCanadaConsumer);
-            
+            /*
+            HtmlWeb foodGet = new HtmlWeb();
+            foodGet.LoadCompleted += load_FoodSafety;
+            foodGet.LoadAsync(Url_FoodSafety);
+            */
         }
 
 
@@ -116,6 +121,65 @@ namespace com.iCottrell.CanuckProductSafety
             }
             
         }
+
+        private void load_FoodSafety(object sender, HtmlDocumentLoadCompleted e)
+        {
+            IList<ProductViewModel> tmpItems = new List<ProductViewModel>();
+            IList<HtmlNode> hnc = e.Document.DocumentNode.DescendantNodes().ToList();
+            String currentCategory = "Food Recalls and Allergy Alerts";
+
+            Boolean content_flag = false;
+            foreach (HtmlNode node in hnc)
+            {
+                if (node.Name.ToLower() == "#comment" && node.InnerText.Contains("start - recall index links"))
+                {
+                    content_flag = true;
+                }
+                else if(node.Name.ToLower() == "#comment" && node.InnerText.Contains("FOOTER BEGINS") )
+                {
+                    content_flag = false;
+                }
+                else if (content_flag && node.Name.ToLower() == "ul")
+                {
+                    foreach (HtmlNode li in node.DescendantNodes().ToList())
+                    {
+                        if (li.Name.ToLower() == "li")
+                        {
+                            ProductViewModel po = new ProductViewModel();
+                            po.Category = currentCategory;
+
+                            foreach (HtmlNode ee in li.DescendantNodes().ToList())
+                            {
+                                if (ee.Name.ToLower() == "strong")
+                                {
+                                    po.RecallDateString = ee.InnerText;
+                                }
+                                else if (ee.Name.ToLower() == "a")
+                                {
+                                    foreach (HtmlAttribute at in ee.Attributes)
+                                    {
+                                        if (at.Name.ToLower() == "href")
+                                        {
+                                            po.Href = "http://www.inspection.gc.ca"+ at.Value;
+                                        }
+                                    }
+                                    po.ShortDescription = ConvertWhitespacesToSingleSpaces(ee.InnerText.Replace("�", "'").Replace("&rsquo;", "'"));
+                                }
+                            }
+                            tmpItems.Add(po);
+                        }
+                    }
+                }
+            }                       
+            foreach (ProductViewModel p in tmpItems.OrderByDescending(x => x._dateRecall))
+            {
+                this.Items.Add(p);
+            }
+            tmpItems.Clear();
+            this.IsDataLoaded = true;
+            NotifyPropertyChanged("WebDataRetrived");
+        }
+
 
         //Because current contains uncategorized items
         private void parse_RecallListCurrent(object sender, HtmlDocumentLoadCompleted e)
@@ -560,5 +624,18 @@ namespace com.iCottrell.CanuckProductSafety
             }
         }
 
+        private CollectionViewSource foodSafetyRecalls;
+        public CollectionViewSource FoodSafetyRecalls
+        {
+            get
+            {
+                if (null == foodSafetyRecalls)
+                {
+                    foodSafetyRecalls = new CollectionViewSource { Source = Items };
+                    foodSafetyRecalls.View.Filter = (x) => FilterItemsByCategory(x, "Food Recalls and Allergy Alerts");
+                }
+                return foodSafetyRecalls;
+            }
+        }
     }
 }

@@ -1,8 +1,8 @@
-﻿<xapCache source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\Bin\Release\com.iCottrell.CanuckProductSafety.xap" wasSigned="False" certificateThumbprint="" TimeStampUrl="" lastWriteTime="17/01/2012 10:15:03 AM">
-  <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\Bin\Release\WMAppManifest.xml" archivePath="WMAppManifest.xml" lastWriteTime="14/11/2011 9:46:06 AM" />
+﻿<xapCache source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\Bin\Release\com.iCottrell.CanuckProductSafety.xap" wasSigned="False" certificateThumbprint="" TimeStampUrl="" lastWriteTime="15/02/2012 9:46:13 AM">
+  <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\Bin\Release\WMAppManifest.xml" archivePath="WMAppManifest.xml" lastWriteTime="15/02/2012 9:26:22 AM" />
   <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\Background.png" archivePath="Background.png" lastWriteTime="08/11/2011 12:27:47 AM" />
   <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\ApplicationIcon.png" archivePath="ApplicationIcon.png" lastWriteTime="08/11/2011 10:10:00 AM" />
-  <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\obj\Release\com.iCottrell.CanuckProductSafety.dll" archivePath="com.iCottrell.CanuckProductSafety.dll" lastWriteTime="17/01/2012 10:15:03 AM" />
+  <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\obj\Release\com.iCottrell.CanuckProductSafety.dll" archivePath="com.iCottrell.CanuckProductSafety.dll" lastWriteTime="15/02/2012 9:46:13 AM" />
   <file source="C:\Users\cottrell\Downloads\Trunk\HAPPhone\Bin\Debug\HtmlAgilityPack.dll" archivePath="HtmlAgilityPack.dll" lastWriteTime="26/10/2011 11:35:59 PM" />
   <file source="C:\Program Files (x86)\Microsoft SDKs\Windows Phone\v7.1\Libraries\Silverlight\Microsoft.Phone.Controls.dll" archivePath="Microsoft.Phone.Controls.dll" lastWriteTime="15/09/2011 3:36:26 PM" />
   <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\appbar.feature.email.rest.png" archivePath="appbar.feature.email.rest.png" lastWriteTime="08/11/2011 9:44:43 AM" />
@@ -10,5 +10,5 @@
   <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\large.png" archivePath="large.png" lastWriteTime="12/11/2011 12:35:15 AM" />
   <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\polygon3.png" archivePath="polygon3.png" lastWriteTime="12/11/2011 2:02:41 AM" />
   <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\SplashScreenImage.jpg" archivePath="SplashScreenImage.jpg" lastWriteTime="12/11/2011 6:21:37 PM" />
-  <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\Bin\Release\AppManifest.xaml" archivePath="AppManifest.xaml" lastWriteTime="17/01/2012 10:15:03 AM" />
+  <file source="C:\Users\cottrell\dev\windows phone\com.iCottrell.CanuckProductSafety\com.iCottrell.CanuckProductSafety\Bin\Release\AppManifest.xaml" archivePath="AppManifest.xaml" lastWriteTime="15/02/2012 9:37:36 AM" />
 </xapCache>

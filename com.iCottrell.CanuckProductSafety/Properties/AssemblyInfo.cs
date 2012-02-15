@@ -11,7 +11,7 @@ using System.Resources;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("iCottrell.com")]
 [assembly: AssemblyProduct("com.iCottrell.CanuckProductSafety")]
-[assembly: AssemblyCopyright("Copyright © iCottrell.com 2011")]
+[assembly: AssemblyCopyright("Copyright © iCottrell.com 2012")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,6 +32,6 @@ using System.Resources;
 //
 // You can specify all the values or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.5.5")]
+[assembly: AssemblyFileVersion("1.5.5")]
 [assembly: NeutralResourcesLanguageAttribute("en-US")]
