@@ -23,13 +23,16 @@ namespace com.iCottrell.CanuckProductSafety
 
         private void reload_Click(object sender, RoutedEventArgs e)
         {
-            if (this.NavigationService.CanGoBack)
+            if (DeviceNetworkInformation.IsNetworkAvailable)
             {
-                this.NavigationService.GoBack();
-            }
-            else
-            {
-                this.NavigationService.Navigate(new Uri("/MainPage.xaml?reload=true", UriKind.Relative));
+                if (this.NavigationService.CanGoBack)
+                {
+                    this.NavigationService.GoBack();
+                }
+                else
+                {
+                    this.NavigationService.Navigate(new Uri("/MainPage.xaml?reload=true", UriKind.Relative));
+                }
             }
         }
     }
